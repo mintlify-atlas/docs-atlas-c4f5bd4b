@@ -1,0 +1,69 @@
+---
+title: "Roles and Permissions"
+description: Understanding the USUARIO and SOPORTE roles in API Tickets.
+---
+
+API Tickets has two user roles: `USUARIO` and `SOPORTE`. Roles are assigned at registration and encoded in the JWT token returned on login.
+
+## Roles
+
+### USUARIO
+
+The default role assigned to anyone who registers without a support code. A `USUARIO` can submit support tickets and look up their status, but cannot access administrative endpoints.
+
+### SOPORTE
+
+An elevated role for support staff. Registering as `SOPORTE` requires providing the correct `codigoSoporte` value (set via the `SOPORTE_CODE` environment variable). `SOPORTE` users can view all tickets, update ticket status, and review ticket history.
+
+<Note>
+  The JWT token carries the role claim as `rol`. Every protected request must include the token in the `Authorization: Bearer <token>` header. The `auth` middleware decodes this claim and makes it available to downstream middleware as `req.usuario.rol`.
+</Note>
+
+## Role assignment at registration
+
+When calling `POST /auth/register`, omit `codigoSoporte` to register as `USUARIO`. Include the correct support code to register as `SOPORTE`.
+
+```json
+// Register as USUARIO
+{
+  "nombre": "Ana García",
+  "correo": "ana@example.com",
+  "password": "securepass"
+}
+
+// Register as SOPORTE
+{
+  "nombre": "Carlos López",
+  "correo": "carlos@example.com",
+  "password": "securepass",
+  "codigoSoporte": "your-support-code"
+}
+```
+
+The same `codigoSoporte` field is required on `POST /auth/login` when logging in as a `SOPORTE` user. `USUARIO` accounts must not include it.
+
+## How roles are enforced
+
+Two middleware functions control access:
+
+- **`auth`** — validates the JWT signature and expiry. Attaches `req.usuario` (with `id`, `rol`, and `correo`) and passes control to the next handler. Returns `401` if the token is missing or invalid.
+- **`soloSoporte`** — runs after `auth`. Allows access only if `req.usuario.rol` is `"SOPORTE"` or `"ADMIN"`. Returns `403` for any other role.
+
+Routes that only use `auth` (without `soloSoporte`) are accessible to all authenticated users regardless of role.
+
+## Permissions table
+
+| Endpoint | USUARIO | SOPORTE |
+|---|---|---|
+| `POST /auth/register` | ✓ | ✓ (with code) |
+| `POST /auth/login` | ✓ | ✓ (with code) |
+| `GET /api/public/departamentos` | ✓ | ✓ |
+| `GET /api/public/tickets/:id` | ✓ | ✓ |
+| `POST /api/admin/tickets` | ✓ | ✓ |
+| `GET /api/admin/tickets` | ✗ | ✓ |
+| `PUT /api/admin/tickets/:id/estado` | ✗ | ✓ |
+| `GET /api/admin/tickets/historial` | ✗ | ✓ |
+
+## The ADMIN role
+
+The `soloSoporte` middleware also accepts the `ADMIN` role, granting identical access to all `SOPORTE`-protected endpoints. Unlike `SOPORTE`, the `ADMIN` role is not enforced with a special code at login — an `ADMIN` user logs in with email and password only (no `codigoSoporte` required).

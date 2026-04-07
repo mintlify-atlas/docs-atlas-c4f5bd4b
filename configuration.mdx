@@ -1,0 +1,84 @@
+---
+title: "Configuration"
+description: "Environment variables required to run the API Tickets server."
+---
+
+## Overview
+
+API Tickets reads all configuration from environment variables via a `.env` file in the project root (using `dotenv`). Create this file before starting the server.
+
+## Complete `.env` example
+
+```ini .env
+# Server
+PORT=3000
+
+# Database
+SQL_SERVER=localhost\SQLEXPRESS
+SQL_DATABASE=SistemaTickets
+SQL_USER=your_db_user
+SQL_PASSWORD=your_db_password
+
+# Authentication
+JWT_SECRET=replace-with-a-strong-random-secret
+JWT_EXPIRES=8h
+SOPORTE_CODE=replace-with-a-strong-random-code
+
+# SMTP (email)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=you@gmail.com
+SMTP_PASSWORD=your_app_password
+SMTP_FROM=you@gmail.com
+
+# Support inbox
+SUPPORT_EMAIL=support-team@example.com
+```
+
+<Warning>
+  Set `JWT_SECRET` and `SOPORTE_CODE` to strong, randomly generated values in production. Never commit them to source control. Anyone who knows `JWT_SECRET` can forge authentication tokens; anyone who knows `SOPORTE_CODE` can register or log in as a support agent.
+</Warning>
+
+## Variable reference
+
+### Server
+
+| Variable | Default | Description |
+|---|---|---|
+| `PORT` | `3000` | Port the Express server listens on. |
+
+### Database
+
+| Variable | Default | Description |
+|---|---|---|
+| `SQL_SERVER` | `localhost\SQLEXPRESS` | MSSQL server address. Use `host\instance` notation for named instances. |
+| `SQL_DATABASE` | `SistemaTickets` | Name of the SQL Server database. |
+| `SQL_USER` | — | Database login username. |
+| `SQL_PASSWORD` | — | Database login password. |
+
+<Note>
+  The default connection settings are optimized for local development (encryption disabled, certificate trust enabled). For production SQL Server deployments, verify your network and TLS configuration with your infrastructure team.
+</Note>
+
+### Authentication
+
+| Variable | Default | Description |
+|---|---|---|
+| `JWT_SECRET` | — | Secret key used to sign and verify JWT tokens. Must be set. |
+| `JWT_EXPIRES` | `8h` | Token expiry duration. Accepts any value supported by the `jsonwebtoken` library (e.g., `1h`, `7d`, `30m`). |
+| `SOPORTE_CODE` | — | Secret code required to register or log in as a `SOPORTE` user. Must be set. |
+
+### SMTP (email)
+
+| Variable | Default | Description |
+|---|---|---|
+| `SMTP_HOST` | `smtp.gmail.com` | Hostname of your outbound mail server. |
+| `SMTP_PORT` | `587` | SMTP port. Use `587` for STARTTLS or `465` for SSL. |
+| `SMTP_USER` | — | SMTP account username (usually your email address). |
+| `SMTP_PASSWORD` | — | SMTP account password or app-specific password. |
+| `SMTP_FROM` | — | The `From` address shown in outgoing emails. |
+| `SUPPORT_EMAIL` | — | Address that receives new ticket alert emails. |
+
+<Tip>
+  If you use Gmail, generate an **App Password** under your Google account security settings instead of using your main account password. Standard passwords will not work when 2-Step Verification is enabled.
+</Tip>

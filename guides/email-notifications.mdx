@@ -1,0 +1,67 @@
+---
+title: "Email Notifications"
+description: Automatic email notifications sent during the ticket lifecycle.
+---
+
+API Tickets sends transactional emails at two points in the ticket lifecycle: when a ticket is created and when it is resolved. Emails are sent via Nodemailer using any SMTP-compatible provider.
+
+## Configuration
+
+Set the following environment variables before starting the server:
+
+```bash
+SMTP_HOST=smtp.gmail.com      # SMTP server hostname
+SMTP_PORT=587                  # SMTP port (587 for STARTTLS)
+SMTP_USER=you@example.com      # SMTP login username
+SMTP_PASSWORD=your-app-password
+SMTP_FROM=you@example.com      # Sender address shown to recipients
+SUPPORT_EMAIL=support@example.com  # Inbox that receives new-ticket alerts
+```
+
+<Tip>
+  For production, use a transactional email service such as SendGrid, Postmark, or Amazon SES instead of a personal Gmail account. If you do use Gmail, generate an App Password under your Google account security settings rather than using your main password.
+</Tip>
+
+## Email types
+
+### 1. Ticket confirmation (`enviarConfirmacionTicket`)
+
+Sent to the contact email address (`CorreoContacto`) immediately after a ticket is successfully inserted into the database.
+
+- **To:** contact email provided in the ticket submission
+- **Subject:** `Ticket #N - Confirmación de Registro`
+- **Contains:** ticket ID, department name, status (`Abierto`), creation date, and problem description
+
+### 2. Support team alert (`enviarNotificacionSoporte`)
+
+Sent to the support team inbox (`SUPPORT_EMAIL`) at the same time as the confirmation email, so staff are notified of every new ticket.
+
+- **To:** `SUPPORT_EMAIL` environment variable
+- **Subject:** `[NUEVO TICKET] #N - DepartmentName`
+- **Contains:** ticket ID, department, creation date, contact name, contact email, and problem description
+
+### 3. Resolution notice (`enviarTicketTerminado`)
+
+Sent to the contact email when a support agent updates the ticket status to `"Terminado"` via `PUT /api/admin/tickets/:id/estado`.
+
+- **To:** contact email stored on the ticket
+- **Subject:** `Ticket #N - Terminado`
+- **Contains:** ticket ID, department name, final status, creation date, and problem description
+
+## When each email fires
+
+<Steps>
+  <Step title="User submits a ticket">
+    `POST /api/admin/tickets` inserts the ticket and then calls both `enviarConfirmacionTicket` (to the contact) and `enviarNotificacionSoporte` (to the support inbox) inside a single `try/catch` block.
+  </Step>
+  <Step title="Email errors are isolated">
+    If either send fails, a warning is logged (`⚠️ Error al enviar correos`) but the API still returns `201 Created`. The ticket is never rolled back due to an email failure.
+  </Step>
+  <Step title="Support agent closes the ticket">
+    `PUT /api/admin/tickets/:id/estado` updates the ticket and inserts a history record inside a database transaction. If `nuevoEstado` equals `"Terminado"`, it queries the ticket contact details and calls `enviarTicketTerminado`. The email call uses `.catch()` so a send failure does not affect the transaction commit.
+  </Step>
+</Steps>
+
+## Email failure behavior
+
+Email failures are non-fatal by design. The ticket creation and status-update flows catch email errors separately so that a misconfigured SMTP server or a network issue never causes a ticket operation to fail from the caller's perspective.

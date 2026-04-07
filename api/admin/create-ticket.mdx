@@ -1,0 +1,120 @@
+---
+title: "POST /api/admin/tickets"
+description: Create a new support ticket. Sends email notifications automatically.
+---
+
+## Overview
+
+Creates a new support ticket and automatically sends email notifications to both the contact person and the support team.
+
+**Endpoint:** `POST /api/admin/tickets`
+
+**Authentication:** None enforced — this endpoint does not require a JWT token
+
+## Request
+
+### Body parameters
+
+<ParamField body="idDep" type="integer" required>
+  Department ID. Use `GET /api/public/departamentos` to retrieve valid department IDs.
+</ParamField>
+
+<ParamField body="nombreContacto" type="string" required>
+  Full name of the contact person. Maximum 100 characters.
+</ParamField>
+
+<ParamField body="correoContacto" type="string" required>
+  Email address of the contact person. Maximum 100 characters.
+</ParamField>
+
+<ParamField body="descripcionProblema" type="string" required>
+  Detailed description of the problem being reported.
+</ParamField>
+
+## Example
+
+```bash
+curl -X POST http://localhost:3000/api/admin/tickets \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "idDep": 2,
+    "nombreContacto": "Jane Doe",
+    "correoContacto": "jane@example.com",
+    "descripcionProblema": "My computer won'\''t turn on after the power outage"
+  }'
+```
+
+## Response
+
+<ResponseField name="success" type="boolean" required>
+  Indicates whether the ticket was created successfully.
+</ResponseField>
+
+<ResponseField name="mensaje" type="string" required>
+  Human-readable confirmation message.
+</ResponseField>
+
+<ResponseField name="ticket" type="object" required>
+  The newly created ticket object.
+
+  <Expandable title="ticket object properties">
+    <ResponseField name="idTicket" type="integer">
+      Unique identifier assigned to the new ticket.
+    </ResponseField>
+    <ResponseField name="idDep" type="integer">
+      ID of the department associated with the ticket.
+    </ResponseField>
+    <ResponseField name="nombreDepartamento" type="string">
+      Name of the department associated with the ticket.
+    </ResponseField>
+    <ResponseField name="nombreContacto" type="string">
+      Full name of the contact person.
+    </ResponseField>
+    <ResponseField name="correoContacto" type="string">
+      Email address of the contact person.
+    </ResponseField>
+    <ResponseField name="descripcionProblema" type="string">
+      Description of the reported problem.
+    </ResponseField>
+    <ResponseField name="estado" type="string">
+      Initial status of the ticket. Always set to `Abierto` on creation.
+    </ResponseField>
+    <ResponseField name="fechaCreacion" type="string">
+      ISO 8601 UTC timestamp of when the ticket was created.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example response
+
+```json
+{
+  "success": true,
+  "mensaje": "Ticket creado exitosamente",
+  "ticket": {
+    "idTicket": 42,
+    "idDep": 2,
+    "nombreDepartamento": "IT Support",
+    "nombreContacto": "Jane Doe",
+    "correoContacto": "jane@example.com",
+    "descripcionProblema": "My computer won't turn on after the power outage",
+    "estado": "Abierto",
+    "fechaCreacion": "2024-01-15T10:30:00.000Z"
+  }
+}
+```
+
+<Note>
+  Two emails are sent automatically when a ticket is created:
+  - A **confirmation email** is sent to the contact's email address (`correoContacto`).
+  - An **alert email** is sent to the support team inbox notifying them of the new ticket.
+
+  Email delivery failures are logged as warnings but do not prevent the ticket from being created.
+</Note>
+
+## Error responses
+
+| Status | Error | Cause |
+|--------|-------|-------|
+| 500 | Error al crear ticket | Database or server error |

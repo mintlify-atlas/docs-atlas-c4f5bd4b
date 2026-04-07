@@ -1,0 +1,110 @@
+---
+title: "Register"
+description: Create a new user account.
+---
+
+Creates a new user account and returns a JWT. No separate login step is needed after registration — the token is ready to use immediately.
+
+```
+POST /auth/register
+```
+
+## Request body
+
+<ParamField body="nombre" type="string" required>
+  Full name of the user.
+</ParamField>
+
+<ParamField body="correo" type="string" required>
+  Email address. Must be unique — registering with an already-used email returns a `409` error.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  Account password. Minimum 8 characters.
+</ParamField>
+
+<ParamField body="codigoSoporte" type="string">
+  The support code configured on the server (`SOPORTE_CODE` env var). Supply this to register as a `SOPORTE` role user. Omit it to register as `USUARIO`. If provided, the value must match exactly or the request is rejected with a `400` error.
+</ParamField>
+
+## Response
+
+### 201 — Created
+
+<ResponseField name="success" type="boolean" required>
+  Always `true` on a successful response.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Confirmation message: `"Usuario registrado e identificado"`.
+</ResponseField>
+
+<ResponseField name="token" type="string" required>
+  Signed JWT. Valid for 8 hours. Include this in the `Authorization: Bearer` header on subsequent requests.
+</ResponseField>
+
+<ResponseField name="user" type="object" required>
+  <Expandable title="properties" defaultOpen>
+    <ResponseField name="nombre" type="string" required>
+      The registered user's full name.
+    </ResponseField>
+    <ResponseField name="rol" type="string" required>
+      Assigned role: `USUARIO` or `SOPORTE`.
+    </ResponseField>
+    <ResponseField name="correo" type="string" required>
+      The registered email address.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "message": "Usuario registrado e identificado",
+  "token": "eyJhbGciOiJIUzI1NiIsInR...",
+  "user": {
+    "nombre": "Jane Doe",
+    "rol": "USUARIO",
+    "correo": "jane@example.com"
+  }
+}
+```
+
+### Error responses
+
+| Status | Error message | Cause |
+|--------|--------------|-------|
+| `400` | `Datos incompletos` | One or more of `nombre`, `correo`, or `password` is missing. |
+| `400` | `Mínimo 8 caracteres` | Password is shorter than 8 characters. |
+| `400` | `Código de soporte incorrecto` | `codigoSoporte` was provided but does not match `SOPORTE_CODE`. |
+| `409` | `Correo ya registrado` | An account with this email already exists. |
+| `500` | `Error en servidor` | Unexpected server error. |
+
+## Examples
+
+<CodeGroup>
+
+```bash Register as USUARIO
+curl --request POST \
+  --url https://your-server/auth/register \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "nombre": "Jane Doe",
+    "correo": "jane@example.com",
+    "password": "securepassword"
+  }'
+```
+
+```bash Register as SOPORTE
+curl --request POST \
+  --url https://your-server/auth/register \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "nombre": "Support Agent",
+    "correo": "support@example.com",
+    "password": "securepassword",
+    "codigoSoporte": "YOUR_SOPORTE_CODE"
+  }'
+```
+
+</CodeGroup>

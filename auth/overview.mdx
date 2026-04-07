@@ -1,0 +1,68 @@
+---
+title: "Authentication Overview"
+description: How JWT authentication works in API Tickets.
+---
+
+API Tickets uses JSON Web Tokens (JWT) to authenticate requests. Every protected endpoint requires a valid token in the `Authorization` header.
+
+## How it works
+
+<Steps>
+  <Step title="Register an account">
+    Call `POST /auth/register` with your name, email, and password. You receive a JWT immediately — no separate login step required after registration.
+  </Step>
+  <Step title="Log in">
+    Call `POST /auth/login` with your email and password to receive a JWT. Use this on subsequent sessions.
+  </Step>
+  <Step title="Include the token in requests">
+    Pass the JWT in the `Authorization` header of every request to a protected endpoint:
+
+    ```bash
+    curl -H "Authorization: Bearer YOUR_TOKEN_HERE" https://your-server/api/admin/tickets
+    ```
+  </Step>
+</Steps>
+
+## User roles
+
+API Tickets has two roles that control what each user can access.
+
+| Role | Description |
+|------|-------------|
+| `USUARIO` | General access. Can submit support tickets. |
+| `SOPORTE` | Ticket management access. Can view all tickets, update their status, and review the history log. |
+
+The role is embedded in the JWT and checked on each request. To register or log in as `SOPORTE`, you must supply the `codigoSoporte` value configured on the server. Without it, all accounts default to `USUARIO`.
+
+## Including the token
+
+Pass the JWT as a Bearer token in the `Authorization` header:
+
+```bash
+curl -H "Authorization: Bearer YOUR_TOKEN_HERE" https://your-server/api/admin/tickets
+```
+
+If the header is missing, the server returns `401 Token no proporcionado`. If the token is invalid or expired, the server returns `401 Token inválido o expirado`.
+
+## Token expiry
+
+Tokens are valid for **8 hours** by default. This is controlled by the `JWT_EXPIRES` environment variable on the server. After expiry, you must log in again to obtain a new token.
+
+<Warning>
+  Tokens cannot be invalidated before they expire. If a token is compromised, it remains valid until its expiry time.
+</Warning>
+
+## The SOPORTE_CODE
+
+A shared secret configured as the `SOPORTE_CODE` environment variable on the server. It must be supplied during registration and login for any `SOPORTE` role user. Keep this value confidential — anyone who knows it can register a support account.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Register" icon="user-plus" href="/auth/register">
+    Create a new user account and receive a JWT.
+  </Card>
+  <Card title="Login" icon="key" href="/auth/login">
+    Authenticate an existing account and receive a JWT.
+  </Card>
+</CardGroup>

@@ -1,0 +1,92 @@
+---
+title: "GET /api/public/tickets/:idTicket"
+description: Look up a specific ticket by its ID.
+---
+
+<Note>
+  This endpoint is public — no authentication needed. It is useful for sharing ticket status with reporters who don't have an account.
+</Note>
+
+## Endpoint
+
+```
+GET /api/public/tickets/:idTicket
+```
+
+**Authentication**: None required.
+
+## Request
+
+### Path parameters
+
+<ParamField path="idTicket" type="integer" required>
+  The unique numeric ID of the ticket.
+</ParamField>
+
+### Example
+
+```bash
+curl http://localhost:3000/api/public/tickets/42
+```
+
+## Response
+
+### 200 OK
+
+```json
+{
+  "success": true,
+  "ticket": {
+    "IdTicket": 42,
+    "IdDep": 2,
+    "NomDep": "IT Support",
+    "NombreContacto": "Jane Doe",
+    "CorreoContacto": "jane@example.com",
+    "DescripcionProblema": "My computer won't turn on",
+    "Estado": "Abierto",
+    "FecCreacion": "2024-01-15T10:30:00.000Z"
+  }
+}
+```
+
+<ResponseField name="success" type="boolean">
+  Indicates whether the request was successful.
+</ResponseField>
+
+<ResponseField name="ticket" type="object">
+  The ticket record.
+
+  <Expandable title="properties">
+    <ResponseField name="IdTicket" type="integer">
+      Unique ticket identifier.
+    </ResponseField>
+    <ResponseField name="IdDep" type="integer">
+      Department ID associated with the ticket.
+    </ResponseField>
+    <ResponseField name="NomDep" type="string">
+      Department name associated with the ticket.
+    </ResponseField>
+    <ResponseField name="NombreContacto" type="string">
+      Contact person's name.
+    </ResponseField>
+    <ResponseField name="CorreoContacto" type="string">
+      Contact person's email address.
+    </ResponseField>
+    <ResponseField name="DescripcionProblema" type="string">
+      Description of the reported problem.
+    </ResponseField>
+    <ResponseField name="Estado" type="string">
+      Current ticket status. Possible values: `Abierto`, `En Proceso`, or `Terminado`.
+    </ResponseField>
+    <ResponseField name="FecCreacion" type="string">
+      ISO 8601 timestamp of when the ticket was created.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Error responses
+
+| Status | Error                  | Cause                              |
+| ------ | ---------------------- | ---------------------------------- |
+| 404    | Ticket no encontrado   | No ticket exists with that ID      |
+| 500    | Error al obtener ticket | Database error                    |

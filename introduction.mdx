@@ -1,0 +1,57 @@
+---
+title: "Introduction"
+description: "API Tickets is a REST API for managing support tickets, built with Express.js, MSSQL, and JWT authentication."
+---
+
+## Overview
+
+API Tickets provides a backend service for creating, tracking, and resolving support tickets. Users can submit tickets describing their problems, and support staff can manage and update their status through a protected admin interface.
+
+The API handles the full ticket lifecycle: submission, email confirmation, status updates, and closure notifications.
+
+## Technology stack
+
+| Component | Technology |
+|---|---|
+| Framework | Express.js v5 |
+| Database | Microsoft SQL Server (MSSQL) |
+| Authentication | JSON Web Tokens (JWT) via `jsonwebtoken` |
+| Password hashing | bcrypt |
+| Email | Nodemailer |
+| Runtime | Node.js |
+
+## Route groups
+
+The API exposes three route groups:
+
+- **`/auth`** — Registration and login. Returns a JWT token on success.
+- **`/api/public`** — Unauthenticated endpoints. Lists departments and retrieves ticket status by ID.
+- **`/api/admin`** — Authenticated endpoints. Requires a valid JWT in the `Authorization` header. Used to create tickets and manage their status.
+
+## User roles
+
+There are two roles in the system:
+
+- **`USUARIO`** — The default role assigned on registration. Can submit support tickets. Anyone can look up a ticket by ID via the public endpoint.
+- **`SOPORTE`** — Support staff role. Requires a secret `SOPORTE_CODE` at registration and login. Can view all tickets, update their status, and access ticket history.
+
+<Note>
+The `SOPORTE_CODE` is set in your `.env` file and must be shared only with support staff. See [Configuration](/configuration) for details.
+</Note>
+
+## Get started
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Clone the repo, configure your environment, and make your first API call in minutes.
+  </Card>
+  <Card title="Configuration" icon="sliders" href="/configuration">
+    All environment variables you need to set before running the server.
+  </Card>
+  <Card title="Authentication" icon="lock" href="/auth/overview">
+    How registration and login work, and how to use JWT tokens.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/admin/create-ticket">
+    Full endpoint reference for all route groups.
+  </Card>
+</CardGroup>

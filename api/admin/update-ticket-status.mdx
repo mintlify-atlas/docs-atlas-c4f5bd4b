@@ -1,0 +1,90 @@
+---
+title: "PUT /api/admin/tickets/:id/estado"
+description: Update the status of a ticket. Requires SOPORTE role. Sends a resolution email when status is set to Terminado.
+---
+
+## Overview
+
+Updates the status of an existing support ticket. Every status change is recorded in the ticket history log. When the status is set to `Terminado`, a resolution email is automatically sent to the contact person.
+
+**Endpoint:** `PUT /api/admin/tickets/:id/estado`
+
+**Authentication:** Required — JWT Bearer token with SOPORTE role
+
+## Request
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The ID of the ticket to update.
+</ParamField>
+
+### Body parameters
+
+<ParamField body="nuevoEstado" type="string" required>
+  The new status value to apply to the ticket. Common values: `Abierto`, `En Proceso`, `Terminado`.
+</ParamField>
+
+## Examples
+
+Setting a ticket to "En Proceso":
+
+```bash
+curl -X PUT http://localhost:3000/api/admin/tickets/42/estado \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"nuevoEstado": "En Proceso"}'
+```
+
+Closing a ticket:
+
+```bash
+curl -X PUT http://localhost:3000/api/admin/tickets/42/estado \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"nuevoEstado": "Terminado"}'
+```
+
+## Response
+
+<ResponseField name="success" type="boolean" required>
+  Indicates whether the status was updated successfully.
+</ResponseField>
+
+<ResponseField name="IdTicket" type="integer" required>
+  The ID of the ticket that was updated.
+</ResponseField>
+
+<ResponseField name="Estado" type="string" required>
+  The new status value that was applied.
+</ResponseField>
+
+### Example response
+
+```json
+{
+  "success": true,
+  "IdTicket": 42,
+  "Estado": "En Proceso"
+}
+```
+
+<Note>
+  - Every status update is recorded in the ticket history log. Use `GET /api/admin/tickets/historial` to view the full history of status changes.
+  - When the status is set to `Terminado`, an automatic resolution email is sent to the ticket's contact email address.
+</Note>
+
+<Warning>
+  Status changes are logged with the authenticated user's ID. A valid JWT is required not only for role verification but also to identify which support agent performed the update. Requests with a JWT that does not contain a user ID will be rejected with a 401 error.
+</Warning>
+
+## Error responses
+
+| Status | Error | Cause |
+|--------|-------|-------|
+| 400 | nuevoEstado es requerido | `nuevoEstado` field is missing from the request body |
+| 401 | Token no proporcionado | No Authorization header present |
+| 401 | Token inválido o expirado | Invalid or expired JWT |
+| 401 | Usuario no autenticado | JWT is valid but does not contain a user ID |
+| 403 | Acceso solo para soporte | Authenticated user does not have the SOPORTE role |
+| 500 | Error al actualizar estado | Database or transaction error |

@@ -1,21 +1,11 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "name": "API Tickets",
+  "projectType": "api-service",
+  "projectName": "API Tickets",
+  "projectDescription": "A RESTful Express.js backend service for managing support tickets with JWT authentication, role-based access control, and automated email notifications.",
   "theme": "luma",
-  "colors": {
-    "primary": "#007bff"
-  },
-  "navbar": {
-    "primary": {
-      "type": "github",
-      "href": "https://github.com/MariaJose1812/Api-Tickets"
-    }
-  },
-  "footer": {
-    "socials": {
-      "github": "https://github.com/MariaJose1812/Api-Tickets"
-    }
-  },
+  "primaryColor": "#007bff",
+  "lightColor": null,
+  "darkColor": null,
   "navigation": {
     "tabs": [
       {
@@ -76,5 +66,23 @@
         ]
       }
     ]
-  }
+  },
+  "keyFeatures": [
+    "JWT-based authentication with role-based access control (USUARIO and SOPORTE roles)",
+    "Ticket lifecycle management: create, list, update status, and track history",
+    "Automated email notifications via SMTP (ticket confirmation, status updates, and resolution alerts)",
+    "Microsoft SQL Server integration with connection pooling",
+    "Support team code verification for privileged role registration",
+    "Public ticket lookup by ID without authentication"
+  ],
+  "publicApiSurface": [
+    "POST /auth/register",
+    "POST /auth/login",
+    "GET /api/public/departamentos",
+    "GET /api/public/tickets/:idTicket",
+    "GET /api/admin/tickets",
+    "POST /api/admin/tickets",
+    "PUT /api/admin/tickets/:id/estado",
+    "GET /api/admin/tickets/historial"
+  ]
 }

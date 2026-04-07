@@ -1,80 +1,191 @@
 ---
 title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+description: "Clone the API Tickets repo, configure your environment, and submit your first ticket in under 10 minutes."
 ---
 
-## Get started in three steps
+## Prerequisites
 
-Get your documentation site running locally and make your first customization.
+Before you start, make sure you have:
 
-### Step 1: Set up your local environment
+- **Node.js** v18 or later
+- **Microsoft SQL Server** (e.g., SQL Server Express) running locally or remotely
+- **SMTP access** for email notifications (e.g., a Gmail account with an app password)
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+## Steps
 
-### Step 2: Deploy your changes
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/MariaJose1812/Api-Tickets.git
+    cd Api-Tickets
+    ```
+  </Step>
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+  <Step title="Install dependencies">
+    ```bash
+    npm install
+    ```
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+    This installs Express, mssql, jsonwebtoken, bcrypt, nodemailer, and other required packages.
+  </Step>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+  <Step title="Configure environment variables">
+    Create a `.env` file in the project root. At minimum, set your database credentials, JWT secret, and SMTP settings:
 
-### Step 3: Go live
+    ```ini .env
+    PORT=3000
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+    SQL_SERVER=localhost\SQLEXPRESS
+    SQL_DATABASE=SistemaTickets
+    SQL_USER=your_db_user
+    SQL_PASSWORD=your_db_password
+
+    JWT_SECRET=replace-with-a-strong-random-secret
+    JWT_EXPIRES=8h
+
+    SOPORTE_CODE=replace-with-a-strong-random-code
+
+    SMTP_HOST=smtp.gmail.com
+    SMTP_PORT=587
+    SMTP_USER=you@gmail.com
+    SMTP_PASSWORD=your_app_password
+    SMTP_FROM=you@gmail.com
+    SUPPORT_EMAIL=support-team@example.com
+    ```
+
+    See [Configuration](/configuration) for a full description of every variable.
+  </Step>
+
+  <Step title="Start the server">
+    ```bash
+    npm start
+    ```
+
+    You should see:
+
+    ```
+    ✓ Servidor en puerto 3000
+    ```
+
+    The server is now listening on `http://localhost:3000`.
+
+    <Tip>
+      You can also run `node server.js` directly. The `npm start` script calls the same command.
+    </Tip>
+  </Step>
+
+  <Step title="Register a user">
+    Create a new account by sending a `POST` request to `/auth/register`:
+
+    ```bash
+    curl -X POST http://localhost:3000/auth/register \
+      -H "Content-Type: application/json" \
+      -d '{
+        "nombre": "Jane Doe",
+        "correo": "jane@example.com",
+        "password": "mypassword"
+      }'
+    ```
+
+    A successful response returns a JWT token immediately:
+
+    ```json
+    {
+      "success": true,
+      "message": "Usuario registrado e identificado",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "user": {
+        "nombre": "Jane Doe",
+        "rol": "USUARIO",
+        "correo": "jane@example.com"
+      }
+    }
+    ```
+
+    <Note>
+      Omitting `codigoSoporte` assigns the default `USUARIO` role. To register as `SOPORTE`, include `"codigoSoporte": "<your SOPORTE_CODE>"` in the request body.
+    </Note>
+  </Step>
+
+  <Step title="Log in and get a JWT token">
+    If you already have an account, log in to retrieve a fresh token:
+
+    ```bash
+    curl -X POST http://localhost:3000/auth/login \
+      -H "Content-Type: application/json" \
+      -d '{
+        "correo": "jane@example.com",
+        "password": "mypassword"
+      }'
+    ```
+
+    Response:
+
+    ```json
+    {
+      "success": true,
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "user": {
+        "nombre": "Jane Doe",
+        "rol": "USUARIO",
+        "correo": "jane@example.com"
+      }
+    }
+    ```
+
+    Copy the `token` value — you'll include it as a `Bearer` token in the next step.
+  </Step>
+
+  <Step title="Submit a support ticket">
+    Create a ticket via `POST /api/admin/tickets`:
+
+    ```bash
+    curl -X POST http://localhost:3000/api/admin/tickets \
+      -H "Content-Type: application/json" \
+      -d '{
+        "idDep": 1,
+        "nombreContacto": "Jane Doe",
+        "correoContacto": "jane@example.com",
+        "descripcionProblema": "My computer won'\''t turn on"
+      }'
+    ```
+
+    A successful response:
+
+    ```json
+    {
+      "success": true,
+      "mensaje": "Ticket creado exitosamente",
+      "ticket": {
+        "idTicket": 42,
+        "idDep": 1,
+        "nombreDepartamento": "IT",
+        "nombreContacto": "Jane Doe",
+        "correoContacto": "jane@example.com",
+        "descripcionProblema": "My computer won't turn on",
+        "estado": "Abierto",
+        "fechaCreacion": "2026-04-07T15:30:00.000Z"
+      }
+    }
+    ```
+
+    The API also sends a confirmation email to `correoContacto` and an alert to the address configured in `SUPPORT_EMAIL`.
+  </Step>
+</Steps>
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
-
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Configuration" icon="sliders" href="/configuration">
+    Review all environment variables and their defaults.
+  </Card>
+  <Card title="Authentication guide" icon="lock" href="/auth/overview">
+    Learn about roles, the SOPORTE code, and token expiry.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/public/get-departments">
+    Explore all available endpoints.
+  </Card>
+  <Card title="Email notifications" icon="envelope" href="/guides/email-notifications">
+    How confirmation and closure emails are sent.
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

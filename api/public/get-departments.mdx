@@ -1,0 +1,69 @@
+---
+title: "GET /api/public/departamentos"
+description: Retrieve the list of available departments.
+---
+
+<Tip>
+  Call this endpoint first to get valid department IDs before creating a ticket. The `IdDep` values returned here are required when submitting a new ticket via `POST /api/admin/tickets`.
+</Tip>
+
+## Endpoint
+
+```
+GET /api/public/departamentos
+```
+
+**Authentication**: None required. This is a public endpoint — no JWT needed.
+
+## Request
+
+No request parameters.
+
+### Example
+
+```bash
+curl http://localhost:3000/api/public/departamentos
+```
+
+## Response
+
+### 200 OK
+
+```json
+{
+  "success": true,
+  "total": 3,
+  "departamentos": [
+    { "IdDep": 1, "NomDep": "Human Resources" },
+    { "IdDep": 2, "NomDep": "IT Support" },
+    { "IdDep": 3, "NomDep": "Finance" }
+  ]
+}
+```
+
+<ResponseField name="success" type="boolean">
+  Indicates whether the request was successful.
+</ResponseField>
+
+<ResponseField name="total" type="integer">
+  Number of departments returned.
+</ResponseField>
+
+<ResponseField name="departamentos" type="array">
+  List of department objects.
+
+  <Expandable title="departamentos[]">
+    <ResponseField name="IdDep" type="integer">
+      Unique department identifier. Use this value when creating tickets.
+    </ResponseField>
+    <ResponseField name="NomDep" type="string">
+      Department name. Departments are returned in alphabetical order by name.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Error responses
+
+| Status | Error                       | Cause          |
+| ------ | --------------------------- | -------------- |
+| 500    | Error al obtener departamentos | Database error |

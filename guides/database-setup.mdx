@@ -1,0 +1,118 @@
+---
+title: "Database Setup"
+description: Setting up the Microsoft SQL Server database for API Tickets.
+---
+
+API Tickets requires Microsoft SQL Server (or SQL Server Express). The connection is managed by the `mssql` Node.js driver using a singleton pool pattern — the pool is created once on first use and reused for all subsequent queries.
+
+## Requirements
+
+- Microsoft SQL Server 2017 or later (SQL Server Express is sufficient for development)
+- A SQL login with read/write permissions on the `SistemaTickets` database
+
+## Connection configuration
+
+The connection is defined in `config/db.js` and driven entirely by environment variables:
+
+```bash
+SQL_SERVER=localhost\SQLEXPRESS   # SQL Server instance (default: localhost\SQLEXPRESS)
+SQL_DATABASE=SistemaTickets       # Database name (default: SistemaTickets)
+SQL_USER=your_db_user             # SQL login username
+SQL_PASSWORD=your_db_password     # SQL login password
+```
+
+<Warning>
+  The default connection settings disable encryption and trust all server certificates, which is acceptable for local development but **must not be used in production**. Consult your infrastructure team to configure secure TLS settings for your SQL Server instance before deploying.
+</Warning>
+
+The pool is a singleton — once `getConnection()` establishes a connection it returns the same pool on every subsequent call. Do not close or reassign the pool object manually.
+
+## Creating the database
+
+```sql
+CREATE DATABASE SistemaTickets;
+GO
+
+USE SistemaTickets;
+GO
+```
+
+## Schema
+
+### `departamentos`
+
+Stores the support departments that tickets can be assigned to.
+
+```sql
+CREATE TABLE dbo.departamentos (
+    IdDep   INT           NOT NULL IDENTITY(1,1) PRIMARY KEY,
+    NomDep  VARCHAR(100)  NOT NULL
+);
+```
+
+### `tickets`
+
+The core table. Each row represents one support request.
+
+```sql
+CREATE TABLE dbo.tickets (
+    IdTicket             INT            NOT NULL IDENTITY(1,1) PRIMARY KEY,
+    IdDep                INT            NOT NULL REFERENCES dbo.departamentos(IdDep),
+    NombreContacto       VARCHAR(100)   NOT NULL,
+    CorreoContacto       VARCHAR(100)   NOT NULL,
+    DescripcionProblema  VARCHAR(MAX)   NOT NULL,
+    Estado               VARCHAR(20)    NOT NULL DEFAULT 'Abierto',
+    FechaCreacion        DATETIME2      NOT NULL DEFAULT SYSUTCDATETIME()
+);
+```
+
+### `Usuarios`
+
+Stores registered user accounts with hashed passwords and role assignments.
+
+```sql
+CREATE TABLE dbo.Usuarios (
+    IdUsuario  INT           NOT NULL IDENTITY(1,1) PRIMARY KEY,
+    NomUs      VARCHAR(100)  NOT NULL,
+    CorUs      VARCHAR(100)  NOT NULL UNIQUE,
+    PassHash   VARCHAR(255)  NOT NULL,
+    Rol        VARCHAR(20)   NOT NULL DEFAULT 'USUARIO'
+);
+```
+
+### `TicketHistorial`
+
+Audit log. A row is inserted every time a support agent changes a ticket's status.
+
+```sql
+CREATE TABLE dbo.TicketHistorial (
+    IdHistorial  INT          NOT NULL IDENTITY(1,1) PRIMARY KEY,
+    IdTicket     INT          NOT NULL REFERENCES dbo.tickets(IdTicket),
+    Estado       VARCHAR(20)  NOT NULL,
+    IdUsuario    INT          NOT NULL REFERENCES dbo.Usuarios(IdUsuario),
+    FecCreacion  DATETIME2    NOT NULL DEFAULT GETDATE()
+);
+```
+
+## Ticket status values
+
+| Status | Meaning |
+|---|---|
+| `Abierto` | Ticket created, not yet assigned |
+| `En Proceso` | A support agent is working on it |
+| `Terminado` | Resolved — triggers the resolution email |
+
+Any other string value is accepted by the `Estado` column; the values above are the ones the application logic treats specially.
+
+## Seed data
+
+Add at least one department before submitting tickets:
+
+```sql
+INSERT INTO dbo.departamentos (NomDep)
+VALUES ('Infraestructura'), ('Soporte Técnico'), ('Redes');
+```
+
+## Connection pool note
+
+The API uses a singleton connection pool — the database connection is established on the first API call after startup, not at boot time. If the SQL Server instance is unavailable when the server starts, it will still start successfully but all API requests will fail with a connection error until the database becomes reachable.

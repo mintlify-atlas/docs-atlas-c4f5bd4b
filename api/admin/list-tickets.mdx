@@ -1,0 +1,92 @@
+---
+title: "GET /api/admin/tickets"
+description: List all support tickets. Requires SOPORTE role.
+---
+
+## Overview
+
+Returns all support tickets in the system, ordered by creation date (newest first). This endpoint is restricted to users with the SOPORTE role.
+
+**Endpoint:** `GET /api/admin/tickets`
+
+**Authentication:** Required — JWT Bearer token with SOPORTE role
+
+## Request
+
+No request parameters.
+
+## Example
+
+```bash
+curl http://localhost:3000/api/admin/tickets \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+## Response
+
+<ResponseField name="success" type="boolean" required>
+  Indicates whether the request was successful.
+</ResponseField>
+
+<ResponseField name="tickets" type="array" required>
+  List of all support tickets, ordered by creation date descending.
+
+  <Expandable title="ticket object properties">
+    <ResponseField name="IdTicket" type="integer">
+      Unique identifier for the ticket.
+    </ResponseField>
+    <ResponseField name="IdDep" type="integer">
+      ID of the department associated with the ticket.
+    </ResponseField>
+    <ResponseField name="NomDep" type="string">
+      Name of the department associated with the ticket.
+    </ResponseField>
+    <ResponseField name="NombreContacto" type="string">
+      Full name of the contact person who submitted the ticket.
+    </ResponseField>
+    <ResponseField name="CorreoContacto" type="string">
+      Email address of the contact person.
+    </ResponseField>
+    <ResponseField name="DescripcionProblema" type="string">
+      Detailed description of the reported problem.
+    </ResponseField>
+    <ResponseField name="Estado" type="string">
+      Current status of the ticket (e.g., `Abierto`, `En Proceso`, `Terminado`).
+    </ResponseField>
+    <ResponseField name="FechaCreacion" type="string">
+      ISO 8601 timestamp of when the ticket was created.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example response
+
+```json
+{
+  "success": true,
+  "tickets": [
+    {
+      "IdTicket": 42,
+      "IdDep": 2,
+      "NomDep": "IT Support",
+      "NombreContacto": "Jane Doe",
+      "CorreoContacto": "jane@example.com",
+      "DescripcionProblema": "My computer won't turn on",
+      "Estado": "Abierto",
+      "FechaCreacion": "2024-01-15T10:30:00.000Z"
+    }
+  ]
+}
+```
+
+<Note>
+  Tickets are returned in descending order by creation date — the newest tickets appear first.
+</Note>
+
+## Error responses
+
+| Status | Error | Cause |
+|--------|-------|-------|
+| 401 | Usuario no autenticado | No valid JWT was provided (not authenticated) |
+| 403 | Acceso solo para soporte | Authenticated user does not have the SOPORTE role |
+| 500 | Error al obtener tickets | Database error |

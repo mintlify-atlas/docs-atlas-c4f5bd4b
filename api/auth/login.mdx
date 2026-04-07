@@ -1,0 +1,104 @@
+---
+title: "POST /auth/login"
+description: Authenticate and receive a JWT token.
+---
+
+## Endpoint
+
+`POST /auth/login`
+
+**Authentication**: None required
+
+---
+
+## Request body
+
+<ParamField body="correo" type="string" required>
+  Registered email address.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  Account password.
+</ParamField>
+
+<ParamField body="codigoSoporte" type="string">
+  Support team secret code. Required for `SOPORTE` users. Must **not** be provided for `USUARIO` users.
+</ParamField>
+
+---
+
+## Examples
+
+Log in as a standard user (`USUARIO` role):
+
+```bash
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"correo": "jane@example.com", "password": "securepass123"}'
+```
+
+Log in as a support agent (`SOPORTE` role):
+
+```bash
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"correo": "agent@example.com", "password": "securepass123", "codigoSoporte": "YOUR_SOPORTE_CODE"}'
+```
+
+---
+
+## Response
+
+### 200 OK
+
+```json
+{
+  "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "nombre": "Jane Doe",
+    "rol": "USUARIO",
+    "correo": "jane@example.com"
+  }
+}
+```
+
+<ResponseField name="success" type="boolean" required>
+  `true` when authentication succeeded.
+</ResponseField>
+
+<ResponseField name="token" type="string" required>
+  JWT token valid for 8 hours. Pass this token as `Authorization: Bearer <token>` on all subsequent authenticated requests.
+</ResponseField>
+
+<ResponseField name="user" type="object" required>
+  Basic profile of the authenticated user.
+
+  <Expandable title="properties">
+    <ResponseField name="nombre" type="string">
+      Full name of the user.
+    </ResponseField>
+    <ResponseField name="rol" type="string">
+      User role: `USUARIO` or `SOPORTE`.
+    </ResponseField>
+    <ResponseField name="correo" type="string">
+      Email address of the user.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<Note>
+  Save the returned `token` and include it in the `Authorization` header as `Bearer <token>` on all subsequent requests that require authentication.
+</Note>
+
+---
+
+## Error responses
+
+| Status | Error                              | Cause                                            |
+| ------ | ---------------------------------- | ------------------------------------------------ |
+| 400    | Debe ingresar el código de soporte | `SOPORTE` user did not provide the support code  |
+| 400    | Código de soporte incorrecto       | Wrong support code provided                      |
+| 400    | Código inválido                    | `USUARIO` user provided a support code (not allowed) |
+| 401    | Credenciales inválidas             | Wrong email or password                          |
+| 500    | Error de servidor                  | Internal server error                            |

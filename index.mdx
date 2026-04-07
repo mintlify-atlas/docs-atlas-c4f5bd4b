@@ -1,97 +1,55 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "API Tickets"
+description: "A RESTful support ticket management API with JWT authentication, role-based access control, and automated email notifications."
 ---
 
-## Setting up
+API Tickets is an Express.js REST API for managing IT support tickets. It provides structured workflows for end users to submit requests, and for support staff to track and resolve them — with automatic email notifications at each step.
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Get the API running and make your first request in minutes
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Authentication" icon="lock" href="/auth/overview">
+    Learn how to register, log in, and use JWT tokens
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="API Reference" icon="code" href="/api/auth/register">
+    Full endpoint documentation with request and response schemas
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Roles & Permissions" icon="users" href="/guides/roles-permissions">
+    Understand the USUARIO and SOPORTE roles and what each can do
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## How it works
 
-Everything you need to create world-class documentation.
+<Steps>
+  <Step title="Register or log in">
+    Create an account via `POST /auth/register` or authenticate with `POST /auth/login` to receive a JWT token.
+  </Step>
+  <Step title="Submit a ticket">
+    Call `POST /api/admin/tickets` with the department, contact name, email, and problem description. The submitter receives an email confirmation automatically.
+  </Step>
+  <Step title="Support team manages tickets">
+    Users with the `SOPORTE` role can list all tickets, update their status (e.g., from `Abierto` to `En Proceso` to `Terminado`), and view the full history log.
+  </Step>
+  <Step title="Automatic notifications">
+    When a ticket is marked as `Terminado`, the contact receives an automatic email confirming the resolution.
+  </Step>
+</Steps>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+## Key features
 
-## Need inspiration?
-
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<CardGroup cols={2}>
+  <Card title="JWT Authentication" icon="shield-halved">
+    Stateless token-based auth with 8-hour expiry. Tokens carry user ID, role, and email.
+  </Card>
+  <Card title="Role-based access" icon="user-shield">
+    Two roles: `USUARIO` for general access and `SOPORTE` for ticket management. Role is enforced at the middleware level.
+  </Card>
+  <Card title="Email notifications" icon="envelope">
+    Nodemailer sends ticket confirmation to submitters, alerts to the support inbox, and resolution notices when tickets close.
+  </Card>
+  <Card title="Public ticket lookup" icon="magnifying-glass">
+    Anyone can look up a ticket by ID via the public endpoint — no authentication required.
+  </Card>
+</CardGroup>

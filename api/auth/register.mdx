@@ -1,0 +1,109 @@
+---
+title: "POST /auth/register"
+description: Register a new user account.
+---
+
+## Endpoint
+
+`POST /auth/register`
+
+**Authentication**: None required
+
+---
+
+## Request body
+
+<ParamField body="nombre" type="string" required>
+  Full name of the user.
+</ParamField>
+
+<ParamField body="correo" type="string" required>
+  Email address. Must be unique across all accounts.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  Account password. Minimum 8 characters.
+</ParamField>
+
+<ParamField body="codigoSoporte" type="string">
+  Support team secret code. Provide this to register with the `SOPORTE` role. If omitted, the `USUARIO` role is assigned.
+</ParamField>
+
+---
+
+## Examples
+
+Register as a standard user (`USUARIO` role):
+
+```bash
+curl -X POST http://localhost:3000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"nombre": "Jane Doe", "correo": "jane@example.com", "password": "securepass123"}'
+```
+
+Register as a support agent (`SOPORTE` role):
+
+```bash
+curl -X POST http://localhost:3000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"nombre": "Support Agent", "correo": "agent@example.com", "password": "securepass123", "codigoSoporte": "YOUR_SOPORTE_CODE"}'
+```
+
+---
+
+## Response
+
+### 201 Created
+
+```json
+{
+  "success": true,
+  "message": "Usuario registrado e identificado",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "nombre": "Jane Doe",
+    "rol": "USUARIO",
+    "correo": "jane@example.com"
+  }
+}
+```
+
+<ResponseField name="success" type="boolean" required>
+  `true` when the registration succeeded.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Human-readable confirmation message.
+</ResponseField>
+
+<ResponseField name="token" type="string" required>
+  JWT token valid for 8 hours. Use this to authenticate subsequent requests.
+</ResponseField>
+
+<ResponseField name="user" type="object" required>
+  Basic profile of the newly registered user.
+
+  <Expandable title="properties">
+    <ResponseField name="nombre" type="string">
+      Full name of the user.
+    </ResponseField>
+    <ResponseField name="rol" type="string">
+      Assigned role: `USUARIO` or `SOPORTE`.
+    </ResponseField>
+    <ResponseField name="correo" type="string">
+      Email address of the user.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+---
+
+## Error responses
+
+| Status | Error                        | Cause                                      |
+| ------ | ---------------------------- | ------------------------------------------ |
+| 400    | Datos incompletos            | Missing `nombre`, `correo`, or `password`  |
+| 400    | Mínimo 8 caracteres          | Password shorter than 8 characters         |
+| 400    | Código de soporte incorrecto | Wrong support code provided                |
+| 409    | Correo ya registrado         | Email address already exists               |
+| 500    | Error en servidor            | Internal server error                      |

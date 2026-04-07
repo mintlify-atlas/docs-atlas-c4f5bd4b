@@ -1,0 +1,80 @@
+---
+title: "GET /api/admin/tickets/historial"
+description: Retrieve the full history log of all ticket status changes. Requires SOPORTE role.
+---
+
+## Overview
+
+Returns a complete log of all ticket status changes across the system, ordered by date (most recent first). Each record includes the support agent who made the change.
+
+**Endpoint:** `GET /api/admin/tickets/historial`
+
+**Authentication:** Required — JWT Bearer token with SOPORTE role
+
+## Request
+
+No request parameters.
+
+## Example
+
+```bash
+curl http://localhost:3000/api/admin/tickets/historial \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+## Response
+
+<ResponseField name="success" type="boolean" required>
+  Indicates whether the request was successful.
+</ResponseField>
+
+<ResponseField name="historial" type="array" required>
+  List of all ticket status change records, ordered by creation date descending.
+
+  <Expandable title="history record properties">
+    <ResponseField name="IdHistorial" type="integer">
+      Unique identifier for the history record.
+    </ResponseField>
+    <ResponseField name="IdTicket" type="integer">
+      ID of the ticket this status change applies to.
+    </ResponseField>
+    <ResponseField name="Estado" type="string">
+      The status value that was applied at this point in time.
+    </ResponseField>
+    <ResponseField name="FecCreacion" type="string">
+      ISO 8601 timestamp of when the status change was recorded.
+    </ResponseField>
+    <ResponseField name="NombreUsuario" type="string">
+      Full name of the support agent who made the status change.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example response
+
+```json
+{
+  "success": true,
+  "historial": [
+    {
+      "IdHistorial": 15,
+      "IdTicket": 42,
+      "Estado": "En Proceso",
+      "FecCreacion": "2024-01-15T14:00:00.000Z",
+      "NombreUsuario": "Support Agent"
+    }
+  ]
+}
+```
+
+<Note>
+  Records are returned in descending order by creation date — the most recent status changes appear first.
+</Note>
+
+## Error responses
+
+| Status | Error | Cause |
+|--------|-------|-------|
+| 401 | Usuario no autenticado | No valid JWT was provided (not authenticated) |
+| 403 | Acceso solo para soporte | Authenticated user does not have the SOPORTE role |
+| 500 | Error al obtener historial | Database error |

@@ -1,0 +1,110 @@
+---
+title: "Login"
+description: Authenticate and receive a JWT token.
+---
+
+Authenticates an existing user and returns a signed JWT. Use the token in the `Authorization` header for all subsequent requests to protected endpoints.
+
+```
+POST /auth/login
+```
+
+<Note>
+  Store the returned token securely (for example, in memory or a secure cookie) and include it as `Authorization: Bearer <token>` in every request that requires authentication. Tokens expire after 8 hours, after which you must log in again.
+</Note>
+
+## Request body
+
+<ParamField body="correo" type="string" required>
+  Email address associated with the account.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  Account password.
+</ParamField>
+
+<ParamField body="codigoSoporte" type="string">
+  The support code configured on the server (`SOPORTE_CODE` env var).
+
+  - **`SOPORTE` users:** required. The request is rejected with `400` if omitted or incorrect.
+  - **`USUARIO` users:** must not be provided. Supplying it returns a `400 Código inválido` error.
+</ParamField>
+
+## Response
+
+### 200 — OK
+
+<ResponseField name="success" type="boolean" required>
+  Always `true` on a successful response.
+</ResponseField>
+
+<ResponseField name="token" type="string" required>
+  Signed JWT. Valid for 8 hours (or the value of `JWT_EXPIRES` on the server). Include this in the `Authorization: Bearer` header on subsequent requests.
+</ResponseField>
+
+<ResponseField name="user" type="object" required>
+  <Expandable title="properties" defaultOpen>
+    <ResponseField name="nombre" type="string" required>
+      The user's full name.
+    </ResponseField>
+    <ResponseField name="rol" type="string" required>
+      The user's role: `USUARIO` or `SOPORTE`.
+    </ResponseField>
+    <ResponseField name="correo" type="string" required>
+      The user's email address.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```json
+{
+  "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIsInR...",
+  "user": {
+    "nombre": "Jane Doe",
+    "rol": "USUARIO",
+    "correo": "jane@example.com"
+  }
+}
+```
+
+### Error responses
+
+| Status | Error message | Cause |
+|--------|--------------|-------|
+| `400` | `Debe ingresar el código de soporte` | User has `SOPORTE` role but `codigoSoporte` was not provided. |
+| `400` | `Código de soporte incorrecto` | `codigoSoporte` was provided but does not match `SOPORTE_CODE`. |
+| `400` | `Código inválido` | `codigoSoporte` was provided but the user has `USUARIO` role. |
+| `401` | `Credenciales inválidas` | Email not found or password is incorrect. |
+| `500` | `Error de servidor` | Unexpected server error. |
+
+<Warning>
+  Invalid credentials always return `401 Credenciales inválidas`, regardless of whether the email exists. This prevents user enumeration.
+</Warning>
+
+## Examples
+
+<CodeGroup>
+
+```bash Login as USUARIO
+curl --request POST \
+  --url https://your-server/auth/login \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "correo": "jane@example.com",
+    "password": "securepassword"
+  }'
+```
+
+```bash Login as SOPORTE
+curl --request POST \
+  --url https://your-server/auth/login \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "correo": "support@example.com",
+    "password": "securepassword",
+    "codigoSoporte": "YOUR_SOPORTE_CODE"
+  }'
+```
+
+</CodeGroup>
